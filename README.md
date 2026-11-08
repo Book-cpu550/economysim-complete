@@ -2,11 +2,11 @@
 
 A client-side economy dashboard and add-on bundle for Minecraft Java 26.2.
 
-> **100% AI coded.** This disclosure applies to the EconomySim components. Fabric API and ShulkerBoxTooltip are third-party dependencies. AI-generated ratings, forecasts, and deal suggestions can be wrong.
+> **100% AI coded.** This disclosure applies to the EconomySim components. Fabric API and ShulkerBoxTooltip are separate third-party dependencies. AI-generated ratings, forecasts, and deal suggestions can be wrong.
 
 ## Install
 
-Use Minecraft Java **26.2**, **Java 25**, and **Fabric Loader 0.19.5 or later**. Download `economysim-complete-1.0.1+mc26.2.jar` from Releases and put it in your client’s `mods` folder. Remove any standalone copies of the bundled mods from that folder. Open the dashboard with `/economysim`.
+Use Minecraft Java **26.2**, **Java 25**, and **Fabric Loader 0.19.5 or later**. Download `economysim-complete-1.0.1+mc26.2.jar` from Releases and put it in your client’s `mods` folder. Install both dependencies below separately in the same `mods` folder. Remove any standalone copies of the EconomySim add-ons. Open the dashboard with `/economysim`.
 
 Version 1.0.1 stores Item Rater memory, saved predictions, and Advisor deal notes by server profile. Previous shared files are preserved and aren’t assigned automatically to a server.
 
@@ -43,7 +43,8 @@ A dash indicates there is no standalone Minecraft chat command registered by tha
 | News Widget 1.0.0 | Shows economy news in a compact HUD. | F8 by default |
 | Predicted Prices 1.3.5 | Estimates prices and finds deals across markets. | `/marketdeals`. Inside the pricing chat only, use `/list`, `/forget <item>`, or `/clearnotes`. |
 | Shulker Bridge 1.0.3 | Uses shulker previews to estimate bundle bargains. | — |
-| Fabric API 0.161.0+26.2 | Supplies shared Fabric hooks. | — |
-| ShulkerBoxTooltip 5.4.1+26.2 | Previews shulker contents from tooltips. | Tooltip controls |
 
-Third-party dependencies retain their upstream licenses. [Fabric API](https://github.com/FabricMC/fabric) · [ShulkerBoxTooltip](https://github.com/MisterPeModder/ShulkerBoxTooltip)
+## Required dependencies (install separately)
+
+- **Fabric API** for Minecraft 26.2. Tested with `0.161.0+26.2`. [Fabric API downloads](https://modrinth.com/mod/fabric-api/versions?g=26.2)
+- **ShulkerBoxTooltip** Fabric version `5.4.1+26.2`, required by the Shulker Bridge. [ShulkerBoxTooltip releases](https://github.com/MisterPeModder/ShulkerBoxTooltip/releases)
