@@ -1,4 +1,4 @@
-# EconomySim Complete
+# EconomySim Complete — NVIDIA NIM edition
 
 A client-side economy dashboard and add-on bundle for Minecraft Java 26.2.
 
@@ -6,23 +6,38 @@ A client-side economy dashboard and add-on bundle for Minecraft Java 26.2.
 
 ## Install
 
-Use Minecraft Java **26.2**, **Java 25**, and **Fabric Loader 0.19.5 or later**. Download `economysim-complete-1.0.1+mc26.2.jar` from Releases and put it in your client’s `mods` folder. Install both dependencies below separately in the same `mods` folder. Remove any standalone copies of the EconomySim add-ons. Open the dashboard with `/economysim`.
+Use Minecraft Java **26.2**, **Java 25**, and **Fabric Loader 0.19.5 or later**. Build this branch or download the JAR artifact from its **Build NVIDIA NIM edition** GitHub Actions run. Put `economysim-complete-1.0.1-nim+mc26.2.jar` in your client's `mods` folder in place of the original EconomySim bundle. Install [Fabric API for Minecraft 26.2](https://modrinth.com/mod/fabric-api/versions?g=26.2) and [ShulkerBoxTooltip 5.4.1+26.2](https://github.com/MisterPeModder/ShulkerBoxTooltip/releases) separately. Remove standalone copies of the EconomySim add-ons. Open the dashboard with `/economysim`.
 
 Version 1.0.1 stores Item Rater memory, saved predictions, and Advisor deal notes by server profile. Previous shared files are preserved and aren’t assigned automatically to a server.
 
-## Local AI setup
+## NVIDIA-hosted AI setup
 
-**Setup disclaimer.** For the Hermes workflow, you need an existing Hermes Agent connection to a running Ollama server. Select `gemma4:12b` as the model on that connection. EconomySim itself calls Ollama directly on `http://localhost:11434`, so Hermes is optional for the mod and is only required for the Hermes workflow. The core dashboard works without a local model.
+Item Rater, Predicted Prices, Loan Advisor, and Advisor all use the same NVIDIA API key and model. Requests go directly from the Minecraft client to `https://integrate.api.nvidia.com/v1/chat/completions`. No Ollama, local model, proxy process, or Hermes connection is required.
 
-1. Install and start Ollama on the computer running Minecraft. Run `ollama pull gemma4:12b`, then `ollama run gemma4:12b` to verify the model works.
-2. For Hermes, use `hermes model`, select a custom Ollama endpoint at `http://localhost:11434/v1`, and choose `gemma4:12b`. Configure Ollama and Hermes for the same context length. Hermes tool use requires at least 64,000 tokens. [Hermes setup guide](https://hermes-agent.nousresearch.com/docs/guides/local-ollama-setup)
-3. Item Rater, Predicted Prices, and Loan Manager default to `gemma4:12b`. For the separate Advisor tab, set `/advisor model gemma4:12b`. This build also checks for a nonempty key before enabling the AI tab. For stock local Ollama, which requires no authentication, use a placeholder such as `/advisor key ollama-local-placeholder`. [Ollama local authentication](https://docs.ollama.com/api/authentication)
+1. Choose a hosted chat/instruct model at [NVIDIA's API catalog](https://build.nvidia.com/), get an API key, and copy the exact model ID shown in its API example. Choose a model with enough context for your market snapshots and JSON-object output support for ratings and prices.
+2. While playing, use the existing client command `/advisor key <your-NVIDIA-key>`, or copy the key to your clipboard and run `/advisor key paste`.
+3. Run `/advisor model <exact-NVIDIA-model-id>`, then `/advisor status`. These settings apply to all four AI features immediately. No model is hardcoded.
+4. Use `/advisor key clear` to remove the saved key. If `NVIDIA_API_KEY` is set in Minecraft's environment, that key remains available as a fallback.
 
-### Gemma 4 12B hardware
+Commands save shared settings in `config/economysim-advisor.json`. The saved key takes precedence over `NVIDIA_API_KEY`; `ANTHROPIC_API_KEY` is no longer used. Key commands are registered as Fabric client commands, as in the original release. Prefer `/advisor key paste` so the credential itself is not entered in the command line. The key is stored as local plaintext, with owner-only file permissions where supported; keep that file private.
 
-- **Disk** — The Ollama model download is about **7.7 GB**. Allow **10 GB or more** of free space for the model and working room. [Ollama model listing](https://ollama.com/library/gemma4:12b)
-- **RAM and GPU** — For Minecraft plus local inference, **32 GB system RAM** and an Ollama-supported GPU with **12–16 GB VRAM** are practical starting targets for shorter prompts. CPU inference is possible with sufficient system RAM and runs more slowly. Google estimates **6.7 GB** to load its Q4_0 variant, before planning for the specific Ollama build, longer contexts, and Minecraft. [Google memory estimates](https://ai.google.dev/gemma/docs/core) · [Ollama GPU support](https://docs.ollama.com/gpu)
-- **64K context** — The Advisor requests **65,536 tokens** when preloading Gemma, and Hermes also needs a long context for tool use. Plan for more memory, with **24 GB VRAM** as a practical starting target for GPU use at that length. These are estimates, and actual use depends on quantization, context settings, and available memory. Check the effective context and CPU/GPU split with `ollama ps`. [Ollama context length](https://docs.ollama.com/context-length)
+Advanced settings (edit while Minecraft is closed) are shown in [the example configuration](examples/economysim-advisor.json): `timeoutSeconds` defaults to 120 (1–300 allowed), `maxTokens` to 900 for Advisor, and `historyTurns` to 4. The other modules keep their original output limits. `jsonMode` defaults to true; set it to false for a model without NVIDIA's `json_object` response format. JSON prompts and output validation remain enabled either way. Reasoning-heavy models can exhaust the original short output limits; use a suitable instruct model for this edition.
+
+Old per-module Ollama endpoint/model properties are ignored. Recognized old Gemma/Claude model defaults and Anthropic/placeholder keys require new NIM setup; server profiles, loans, notes, ratings, and predictions retain their original storage behavior. Model input includes the feature's existing market, item, loan, and conversation context, now sent to NVIDIA. Rate limits and service errors are surfaced without automatically retrying a potentially billed request. The dashboard and offline deal math remain available without an API key.
+
+## Build and validation
+
+Install **JDK 25 or newer**, **Python 3.10+**, and **curl**, then run:
+
+```sh
+python3 build.py --test
+```
+
+The build downloads the original v1.0.1 release and checksum-pinned build dependencies, compiles the new transport/configuration code, patches only the four AI modules, verifies patched bytecode, and writes `dist/economysim-complete-1.0.1-nim+mc26.2.jar`. The published upstream repository contains no Java source; this branch is a reproducible patch project, not a recovered full source tree. Build tools, test stubs, and downloaded dependencies are not bundled into the mod. Minecraft supplies Gson and Fabric Loader at runtime.
+
+Tests use a local mock HTTP server and fake credentials. They cover both request/response formats, ratings and prediction JSON, shared settings, authentication, errors, timeouts, cancellation, archive integrity, preserved resources, and unchanged unrelated modules. No real API key is needed for the build or CI.
+
+Before using this edition regularly, launch Minecraft with the required dependencies and smoke-test Item Rater analysis/chat, price predictions, Loan Advisor, and Advisor using your chosen NVIDIA model. Confirm switching server profiles preserves their separate data. In-game behavior and live NVIDIA responses require this additional validation; standalone tests do not cover them. To revert, replace the NIM JAR with the original v1.0.1 JAR and restore your previous advisor configuration if needed.
 
 ## Included mods and commands
 

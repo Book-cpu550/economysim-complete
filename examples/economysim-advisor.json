@@ -1,0 +1,8 @@
+{
+  "apiKey": "",
+  "model": "",
+  "maxTokens": 900,
+  "historyTurns": 4,
+  "timeoutSeconds": 120,
+  "jsonMode": true
+}
